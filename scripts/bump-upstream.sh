@@ -15,6 +15,6 @@ echo; git -C "$W/up" diff --stat "$PIN..$NEW" -- . ':!*.md' ':!documents' | tail
 echo; echo "dependency changes:"; git -C "$W/up" diff "$PIN..$NEW" -- Cargo.lock | grep -E '^[+-]name|^[+-]version' | head -30 || true
 [ -n "${1:-}" ] || { echo; echo "review the above, then: scripts/bump-upstream.sh $NEW"; exit 0; }
 sed -i "s/^ARG AQUATIC_REF=.*/ARG AQUATIC_REF=$NEW/" Dockerfile
-docker build -t aquatic-tracker:bump .
-tests/smoke.sh aquatic-tracker:bump
+docker build -t aquatic-docker:bump .
+tests/smoke.sh aquatic-docker:bump
 git add Dockerfile && git commit -q -m "chore: bump pinned aquatic to ${NEW:0:7}" && echo "committed; push when you are happy"

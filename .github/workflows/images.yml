@@ -1,6 +1,6 @@
 name: Publish container image
 
-# Publishes the image, multi-arch, to ghcr.io/wentthefox/aquatic-tracker for EVERY push to main, tagged <sha7> and sha-<sha7>.
+# Publishes the image, multi-arch, to ghcr.io/wentthefox/aquatic-docker for EVERY push to main, tagged <sha7> and sha-<sha7>.
 # There are no version tags, no `latest` and no git tags: the commit is the version (the upstream aquatic commit is pinned in the Dockerfile).
 #
 # Each architecture is built natively on its own runner (no qemu), pushed as <sha7>-<arch>, then merged into one multi-arch
