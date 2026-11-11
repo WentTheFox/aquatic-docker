@@ -58,6 +58,11 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,scope=${{ matrix.arch }},mode=max
 
+      # Runs the amd64 image just pushed (the arm64 one is the same source). The publish job only adds the sha- tag when this passes.
+      - name: Smoke test (amd64)
+        if: matrix.arch == 'amd64'
+        run: tests/smoke.sh "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
+
   publish:
     name: 'Publish multi-arch tags'
     needs: build

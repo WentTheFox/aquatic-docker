@@ -1,0 +1,46 @@
+name: Watch upstream
+
+# Weekly: if upstream aquatic has commits newer than the pinned AQUATIC_REF, open (or update) ONE issue listing them with a compare link and
+# the command to review and bump. Nothing is changed automatically: a new upstream commit is code that would run on a public port.
+on:
+  schedule:
+    - cron: '43 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare the pin with upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pin=$(sed -n 's/^ARG AQUATIC_REF=//p' Dockerfile | head -n1)
+          git clone --quiet https://github.com/greatest-ape/aquatic upstream
+          head=$(git -C upstream rev-parse origin/HEAD)
+          n=$(git -C upstream rev-list --count "$pin..$head")
+          echo "pin=$pin head=$head new commits=$n"
+          [ "$n" -gt 0 ] || { echo "up to date"; exit 0; }
+          {
+            echo "Upstream aquatic is **$n commit(s)** ahead of the pinned \`${pin:0:7}\` (HEAD \`${head:0:7}\`)."
+            echo
+            echo "Compare: https://github.com/greatest-ape/aquatic/compare/${pin:0:12}...${head:0:12}"
+            echo
+            echo '```'
+            git -C upstream log --format='%h %ad %s' --date=short "$pin..$head" | head -40
+            echo '```'
+            echo
+            echo "Review the diff, then bump locally (rebuilds and runs the smoke test): \`scripts/bump-upstream.sh $head\`"
+          } > body.md
+          gh label create upstream --color 5319e7 --description "Upstream has new commits" 2>/dev/null || true
+          existing=$(gh issue list --label upstream --state open --json number --jq '.[0].number // empty')
+          title="Upstream aquatic is ahead of the pinned commit (${pin:0:7} → ${head:0:7})"
+          if [ -n "$existing" ]; then gh issue edit "$existing" --title "$title" --body-file body.md
+          else gh issue create --title "$title" --body-file body.md --label upstream; fi
