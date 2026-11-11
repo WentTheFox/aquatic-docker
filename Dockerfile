@@ -14,7 +14,9 @@ RUN git clone --quiet https://github.com/greatest-ape/aquatic . \
  && git checkout --quiet --detach "$AQUATIC_REF" \
  && test "$(git rev-parse HEAD)" = "$AQUATIC_REF"
 # --locked: exactly the dependency versions upstream committed. No native-CPU flags (the image must run on any amd64/arm64 host).
-RUN cargo build --release --locked -p aquatic_udp
+# --no-default-features --features mimalloc: drops the optional Prometheus exporter (we never enable it), which takes the hyper/h2/tokio
+# HTTP stack and 60+ crates out of a binary that parses untrusted UDP packets (186 -> 122 crates; RustSec flagged h2 and crossbeam-epoch there).
+RUN cargo build --release --locked -p aquatic_udp --no-default-features --features mimalloc
 
 FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
 COPY --from=build /src/target/release/aquatic_udp /usr/local/bin/aquatic_udp

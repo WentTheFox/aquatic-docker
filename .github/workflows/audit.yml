@@ -1,7 +1,9 @@
 name: Audit pinned upstream
 
-# Weekly and on demand: checks the Rust dependencies of the PINNED aquatic commit (Dockerfile AQUATIC_REF) against the RustSec
-# advisory database. A failure means "look at it and bump the pin", it does not block image builds.
+# Weekly and on demand: checks the Rust dependencies of the PINNED aquatic commit (Dockerfile AQUATIC_REF) against the RustSec advisory
+# database, but only fails for advisories (vulnerabilities and "unsound" ones) in crates that are really in the aquatic_udp binary we build
+# (same feature flags as the Dockerfile): upstream's lockfile also covers the HTTP/WebSocket trackers, whose TLS stack we do not ship.
+# A failure means "look at it and bump the pin" (see scripts/bump-upstream.sh); it does not block image builds.
 on:
   schedule:
     - cron: '17 5 * * 1'
@@ -23,8 +25,27 @@ jobs:
           git clone --quiet https://github.com/greatest-ape/aquatic upstream
           git -C upstream checkout --quiet --detach "$ref"
 
-      - name: cargo audit
+      - name: Audit the crates of the binary we build
         working-directory: upstream
         run: |
           cargo install cargo-audit --locked --quiet
-          cargo audit
+          cargo audit --json > /tmp/audit.json || true
+          cargo tree -p aquatic_udp --locked --no-default-features --features mimalloc -e normal --prefix none | awk '{print $1}' | sort -u > /tmp/tree.txt
+          echo "crates in the aquatic_udp binary: $(wc -l < /tmp/tree.txt)"
+          python3 - <<'PY'
+          import json, sys
+          tree = set(open('/tmp/tree.txt').read().split())
+          d = json.load(open('/tmp/audit.json'))
+          bad = []
+          for v in d.get('vulnerabilities', {}).get('list', []):
+              if v['package']['name'] in tree:
+                  bad.append(('VULNERABILITY', v['package']['name'], v['package']['version'], v['advisory']['id'], v['advisory']['title']))
+          for w in d.get('warnings', {}).get('unsound', []):
+              if w['package']['name'] in tree:
+                  bad.append(('UNSOUND', w['package']['name'], w['package']['version'], w['advisory']['id'], w['advisory']['title']))
+          other = sum(len(v) for v in d.get('warnings', {}).values()) + len(d.get('vulnerabilities', {}).get('list', []))
+          print(f'{len(bad)} advisory(ies) in the shipped binary ({other} findings in the whole upstream lockfile, informational)')
+          for b in bad:
+              print('::error::%s %s %s %s: %s' % b)
+          sys.exit(1 if bad else 0)
+          PY
