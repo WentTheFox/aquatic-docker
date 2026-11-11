@@ -18,4 +18,5 @@ Local check:
 
 ## License
 
-Apache License 2.0 (see `LICENSE` and `NOTICE`), the same as upstream aquatic, which this repository only packages.
+The packaging in this repository (Dockerfile, configuration, scripts, workflows) is MIT licensed, see `LICENSE`.
+aquatic itself, which the image contains, is Apache-2.0 by its authors: see `LICENSE-aquatic` and `NOTICE`.
