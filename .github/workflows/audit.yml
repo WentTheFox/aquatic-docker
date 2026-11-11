@@ -1,0 +1,30 @@
+name: Audit pinned upstream
+
+# Weekly and on demand: checks the Rust dependencies of the PINNED aquatic commit (Dockerfile AQUATIC_REF) against the RustSec
+# advisory database. A failure means "look at it and bump the pin", it does not block image builds.
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check out the pinned upstream commit
+        run: |
+          ref=$(sed -n 's/^ARG AQUATIC_REF=//p' Dockerfile | head -n1)
+          git clone --quiet https://github.com/greatest-ape/aquatic upstream
+          git -C upstream checkout --quiet --detach "$ref"
+
+      - name: cargo audit
+        working-directory: upstream
+        run: |
+          cargo install cargo-audit --locked --quiet
+          cargo audit

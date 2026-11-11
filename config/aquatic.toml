@@ -1,0 +1,13 @@
+# aquatic_udp configuration used by the image's deployment (mounted at /etc/aquatic/aquatic.toml).
+# Private tracker: only info hashes listed in the access list are served.
+log_level = "warn"
+
+[network]
+use_ipv4 = true
+use_ipv6 = false
+address_ipv4 = "0.0.0.0:42069"
+
+[access_list]
+mode = "allow"
+# newline-separated 40-character hex info hashes; read on start and on SIGUSR1
+path = "/etc/aquatic/access-list.txt"
