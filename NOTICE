@@ -1,0 +1,6 @@
+aquatic-docker
+Copyright 2026 WentTheFox
+
+This repository packages aquatic (https://github.com/greatest-ape/aquatic), a BitTorrent tracker written in Rust by Joakim Frostegård
+and contributors, licensed under the Apache License 2.0. The container image is built from a pinned upstream commit (see the Dockerfile)
+and includes upstream's LICENSE file at /usr/share/doc/aquatic/LICENSE.

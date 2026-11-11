@@ -15,3 +15,7 @@ Local check:
 
     docker build -t aquatic-docker .
     docker run --rm -p 42069:42069/udp -v ./config/aquatic.toml:/etc/aquatic/aquatic.toml:ro -v ./access-list.txt:/etc/aquatic/access-list.txt:ro aquatic-docker
+
+## License
+
+Apache License 2.0 (see `LICENSE` and `NOTICE`), the same as upstream aquatic, which this repository only packages.
