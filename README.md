@@ -11,6 +11,8 @@ built from a **pinned upstream commit** (`AQUATIC_REF` in the `Dockerfile`) into
 - Bumping the pin: read the upstream diff, change `AQUATIC_REF`, push to `main`. The `audit` workflow checks the pinned dependencies
   against RustSec every week.
 
+- **Dependency override:** the `Dockerfile` pins `anyhow` to 1.0.103 on top of upstream's lockfile (RUSTSEC-2026-0190), checked so that nothing else in `Cargo.lock` changes. It fails with a clear message once upstream locks something other than 1.0.102: then delete the override step here and in `.github/workflows/audit.yml`.
+
 Local check:
 
     docker build -t aquatic-docker .

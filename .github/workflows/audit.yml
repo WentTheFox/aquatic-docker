@@ -28,6 +28,9 @@ jobs:
       - name: Audit the crates of the binary we build
         working-directory: upstream
         run: |
+          # Same override as the Dockerfile (anyhow RUSTSEC-2026-0190): audit what we ship. Fails when upstream moved on, so the override gets removed.
+          test "$(awk '/^name = "anyhow"$/{getline; print}' Cargo.lock)" = 'version = "1.0.102"' || { echo "::error::upstream no longer locks anyhow 1.0.102: remove the anyhow override here and in the Dockerfile"; exit 1; }
+          cargo update -p anyhow --precise 1.0.103
           cargo install cargo-audit --locked --quiet
           cargo audit --json > /tmp/audit.json || true
           cargo tree -p aquatic_udp --locked --no-default-features --features mimalloc -e normal --prefix none | awk '{print $1}' | sort -u > /tmp/tree.txt
