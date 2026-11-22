@@ -1,7 +1,7 @@
 name: Publish container image
 
 # Publishes the image, multi-arch, to ghcr.io/wentthefox/aquatic-docker for EVERY push to main, tagged <sha7> and sha-<sha7>.
-# There are no version tags, no `latest` and no git tags: the commit is the version (the upstream aquatic commit is pinned in the Dockerfile).
+# There are no version tags and no git tags (`latest` is a moving convenience tag, deployments pin sha-<sha7>): the commit is the version (the upstream aquatic commit is pinned in the Dockerfile).
 #
 # Each architecture is built natively on its own runner (no qemu), pushed as <sha7>-<arch>, then merged into one multi-arch
 # tag. The sha-<sha7> tag, which Argo CD Image Updater follows, is added last.
@@ -88,4 +88,5 @@ jobs:
           repo=$(echo "ghcr.io/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/}" | tr '[:upper:]' '[:lower:]')
           sha="${GITHUB_SHA:0:7}"
           docker buildx imagetools inspect "$repo:$sha" > /dev/null
+          docker buildx imagetools create -t "$repo:latest" "$repo:$sha"
           docker buildx imagetools create -t "$repo:sha-$sha" "$repo:$sha"
